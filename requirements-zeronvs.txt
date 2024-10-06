@@ -10,7 +10,10 @@ open3d
 visu3d
 pyspng
 
-lightning==2.0.0
+# lightning==2.0.0
+# pytorch-lightning 2.4.0 requires torch>=2.1.0, but you have torch 2.0.1+cu118 which is incompatible.
+# botocore 1.35.24 requires urllib3<1.27,>=1.25.4; python_version < "3.10", but you have urllib3 2.2.3 which is incompatible.
+# lightning 2.0.0 requires fastapi<0.89.0, but you have fastapi 0.115.0 which is incompatible.
 omegaconf==2.3.0
 jaxtyping
 typeguard
@@ -29,7 +32,7 @@ xatlas
 trimesh[easy]
 networkx
 pysdf
-PyMCubes
+# PyMCubes
 wandb
 gradio
 git+https://github.com/ashawkey/envlight.git

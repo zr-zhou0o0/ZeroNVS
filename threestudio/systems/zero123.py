@@ -56,7 +56,7 @@ class MaskedBackward(torch.autograd.Function):
         grad_output *= ctx.mask_ref["mask"]
         return grad_output, None
 
-
+# XXX HERE zero123system
 @threestudio.register("zero123-system")
 class Zero123(BaseLift3DSystem):
     @dataclass

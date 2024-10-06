@@ -21,6 +21,7 @@ class ColoredFilter(logging.Filter):
     MAGENTA = "\033[35m"
     CYAN = "\033[36m"
 
+    # find a color for each type of log. in terminal.
     COLORS = {
         "WARNING": YELLOW,
         "INFO": GREEN,
@@ -41,6 +42,8 @@ class ColoredFilter(logging.Filter):
             record.msg = f"{record.msg}{self.RESET}"
         return True
 
+
+# ckpt: checkpoint, save pretrained model, with state of optimizer and state of training
 def set_system_status(system, ckpt_path):
     import torch
     if ckpt_path is None:
@@ -75,6 +78,7 @@ def main(args, extras) -> None:
     from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
     from pytorch_lightning.utilities.rank_zero import rank_zero_only
 
+    # what is this?
     if args.typecheck:
         from jaxtyping import install_import_hook
 
@@ -93,12 +97,14 @@ def main(args, extras) -> None:
     from threestudio.utils.typing import Optional
 
     from ldm.models.diffusion import options
-    options.LDM_DISTILLATION_ONLY = True
+    options.LDM_DISTILLATION_ONLY = True # what is distillation only???
+    # XXX HERE: set diffusion model
 
     logger = logging.getLogger("pytorch_lightning")
     if args.verbose:
         logger.setLevel(logging.DEBUG)
 
+    # set logging format
     for handler in logger.handlers:
         if handler.stream == sys.stderr:  # type: ignore
             if not args.gradio:
@@ -108,8 +114,8 @@ def main(args, extras) -> None:
                 handler.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))
 
     # parse YAML config to OmegaConf
-    cfg: ExperimentConfig
-    cfg = load_config(args.config, cli_args=extras, n_gpus=n_gpus)
+    cfg: ExperimentConfig # ":" is class inherited comments. which means cfg is inherited from ExperimentConfig.
+    cfg = load_config(args.config, cli_args=extras, n_gpus=n_gpus) # the zero123_scene.yaml
 
     # set a different seed for each device
     pl.seed_everything(cfg.seed + get_rank(), workers=True)
@@ -123,24 +129,28 @@ def main(args, extras) -> None:
     # import pdb
     # pdb.set_trace()
 
-    dm = threestudio.find(cfg.data_type)(cfg.data)
+    # XXX HERE is dataloader and workflow in system module.
+    dm = threestudio.find(cfg.data_type)(cfg.data) # "find" will return a class, and initialized by cfg.data
+    # here data type is: single-image-datamodule
     system: BaseSystem = threestudio.find(cfg.system_type)(
         cfg.system, resumed=cfg.resume is not None
-    )
+    ) # system inherits from BaseSystem
+    # here system is "zero123-system"
 
-    system.set_save_dir(os.path.join(cfg.trial_dir, "save"))
+    # the path where to save log
+    system.set_save_dir(os.path.join(cfg.trial_dir, "save")) 
 
-    if args.gradio:
+    if args.gradio: # gradio: a lib to generate UI
         fh = logging.FileHandler(os.path.join(cfg.trial_dir, "logs"))
         fh.setLevel(logging.INFO)
-        if args.verbose:
+        if args.verbose: # detailed log
             fh.setLevel(logging.DEBUG)
         fh.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))
         logger.addHandler(fh)
 
     callbacks = []
     if args.train:
-        callbacks += [
+        callbacks += [ # set: save model and configs when training
             ModelCheckpoint(
                 dirpath=os.path.join(cfg.trial_dir, "ckpts"), **cfg.checkpoint
             ),
@@ -170,6 +180,7 @@ def main(args, extras) -> None:
     loggers = []
     if args.train:
         # make tensorboard logging dir to suppress warning
+        # in distributed training, ensure only one device(rank 0 ) will do some operations
         rank_zero_only(
             lambda: os.makedirs(os.path.join(cfg.trial_dir, "tb_logs"), exist_ok=True)
         )()
@@ -184,17 +195,20 @@ def main(args, extras) -> None:
             )
         )()
 
+    # set the trainer
     trainer = Trainer(
         callbacks=callbacks,
         logger=loggers,
         inference_mode=False,
         accelerator="gpu",
         devices=devices,
-        **cfg.trainer,
+        **cfg.trainer, # unpacking keywords in the dictionary. equals to passing every key-value as an independent parameter.
     )
 
     if args.train:
-        trainer.fit(system, datamodule=dm, ckpt_path=cfg.resume)
+        # XXX HERE to find the workflow in the system and dm
+        # system -> BaseSystem(in threedstudio) -> LightningModule
+        trainer.fit(system, datamodule=dm, ckpt_path=cfg.resume) # where is cfg.resume?????????
         trainer.test(system, datamodule=dm)
         if args.gradio:
             # also export assets if in gradio mode
@@ -207,9 +221,9 @@ def main(args, extras) -> None:
         # manually set epoch and global_step as they cannot be automatically resumed
         set_system_status(system, cfg.resume)
         trainer.test(system, datamodule=dm, ckpt_path=cfg.resume)
-    elif args.export:
+    elif args.export:   
         set_system_status(system, cfg.resume)
-        trainer.predict(system, datamodule=dm, ckpt_path=cfg.resume)
+        trainer.predict(system, datamodule=dm, ckpt_path=cfg.resume) # XXX error: *** stack smashing detected ***: terminated
 
 
 if __name__ == "__main__":
@@ -224,6 +238,7 @@ if __name__ == "__main__":
         "this argument is ignored and all available GPUs are always used.",
     )
 
+    # choose train, because we train nerf for every image
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--train", action="store_true")
     group.add_argument("--validate", action="store_true")
@@ -244,7 +259,7 @@ if __name__ == "__main__":
         help="whether to enable dynamic type checking",
     )
 
-    args, extras = parser.parse_known_args()
+    args, extras = parser.parse_known_args() # what will extras get???
 
     if args.gradio:
         # FIXME: no effect, stdout is not captured

@@ -15,7 +15,8 @@ for ((i=0; i<15; i++)); do
     echo $scene_uid
     echo $scale
 
-    python launch.py --config configs/zero123_scene.yaml --train --gpu 0 \
+    # XXX export, system exporter renderer
+    python launch.py --config configs/zero123_scene.yaml --export --gpu 0 \
         system.guidance.cond_image_path="/tmp/input_image_dtu_guidance.png" \
         data.image_path="/tmp/input_image_dtu.png" \
         system.guidance.pretrained_model_name_or_path=$CKPT_PATH \
@@ -27,6 +28,8 @@ for ((i=0; i<15; i++)); do
         system.loss.lambda_opaque=0.1 \
         system.background.color='[0.0,0.0,0.0]' \
         system.background.random_aug=false \
+        system.exporter.context_type=cuda \
+        system.renderer.context_type=cuda \
         data.view_synthesis.manual_gt_to_pred_scale=$scale \
         data.random_camera.eval_width=400 \
         data.random_camera.eval_height=300 \

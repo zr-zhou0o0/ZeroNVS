@@ -857,7 +857,7 @@ def get_guidance_image_path(image_path):
     base, ext = os.path.splitext(image_path)
     return base + '_guidance' + ext
 
-
+# XXX HERE the dataloader!
 @register("single-image-datamodule")
 class SingleImageDataModule(pl.LightningDataModule):
     cfg: SingleImageDataModuleConfig

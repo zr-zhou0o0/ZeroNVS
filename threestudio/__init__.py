@@ -1,6 +1,13 @@
-__modules__ = {}
+
+# a module_register machnism
+# When a class @register("zero123-system") is applied, it stores zero123-system as the key in __modules__
+
+__modules__ = {} # a global dictionary
 
 
+
+# decorator, receive a function or class, and return a modified function or class
+# here, "register" is a decorator, "decorator" is the inner func of decorator for wrapping
 def register(name):
     def decorator(cls):
         __modules__[name] = cls
@@ -9,6 +16,7 @@ def register(name):
     return decorator
 
 
+# so i can find the "zero123-system" in systems/zero123/
 def find(name):
     return __modules__[name]
 

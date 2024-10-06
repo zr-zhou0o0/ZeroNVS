@@ -31,6 +31,7 @@ python launch.py --config configs/zero123_scene.yaml --train --gpu 0 \
     system.renderer.far_plane=1000.0 \
     system.guidance.precomputed_scale=$SCALE \
     system.guidance.use_anisotropic_schedule=true \
-    system.guidance.anisotropic_offset=1000
+    system.guidance.anisotropic_offset=1000 \
+    system.exporter.context_type=cuda # XXX 
     
     

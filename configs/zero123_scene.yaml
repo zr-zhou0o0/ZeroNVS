@@ -31,7 +31,7 @@ data: # threestudio/data/image.py -> SingleImageDataModuleConfig
   random_camera: # threestudio/data/uncond.py -> RandomCameraDataModuleConfig
     height: [128, 256]
     width: [128, 256]
-    batch_size: [6, 1]
+    batch_size: [2, 1] # XXX 
     resolution_milestones: [2000]
     eval_height: 256
     eval_width: 256
@@ -110,7 +110,7 @@ system:
     random_aug_prob: 1.0
 
 
-  renderer_type: "nerf-volume-renderer"
+  renderer_type: "nerf-volume-renderer" # XXX HERE: set nerf
   renderer:
     radius: ${system.geometry.radius}
     # num_samples_per_ray: 512

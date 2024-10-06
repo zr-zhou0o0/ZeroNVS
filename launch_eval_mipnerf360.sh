@@ -21,7 +21,8 @@ for ((i=0; i<7; i++)); do
     echo $view_idx
     echo $precomputed_scale
 
-    python launch.py --config configs/zero123_scene.yaml --train --gpu 0 \
+    # XXX change --train to --export
+    python launch.py --config configs/zero123_scene.yaml --export --gpu 0 \
         system.guidance.cond_image_path="/tmp/input_image_mipnerf360_guidance.png" \
         data.image_path="/tmp/input_image_mipnerf360.png" \
         system.guidance.pretrained_model_name_or_path=$CKPT_PATH \
@@ -40,5 +41,6 @@ for ((i=0; i<7; i++)); do
         system.renderer.near_plane=0.6 \
         system.renderer.far_plane=1000.0 \
         system.guidance.use_anisotropic_schedule=true \
-        system.guidance.anisotropic_offset=1000
+        system.guidance.anisotropic_offset=1000 \
+        system.exporter.context_type=cuda # XXX 
 done
