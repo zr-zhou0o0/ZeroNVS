@@ -182,7 +182,7 @@ class Zero123Guidance(BaseObject):
         self.weights_dtype = torch.float32
         self.model = load_model_from_config(
             self.config,
-            self.cfg.pretrained_model_name_or_path,
+            self.cfg.pretrained_model_name_or_path, # XXX so it on earth load which path?
             device=self.device,
             vram_O=self.cfg.vram_O,
         )
@@ -286,7 +286,7 @@ class Zero123Guidance(BaseObject):
 
     @torch.cuda.amp.autocast(enabled=False)
     @torch.no_grad()
-    def get_cond_from_known_camera(self, batch, c_crossattn, c_concat):
+    def get_cond_from_known_camera(self, batch, c_crossattn, c_concat): # XXX camera?
         T = common.compute_T(
             self.config.model.params.conditioning_config,
             None,
@@ -331,7 +331,7 @@ class Zero123Guidance(BaseObject):
 
     @torch.cuda.amp.autocast(enabled=False)
     @torch.no_grad()
-    def get_cond(
+    def get_cond( # XXX HERE camera?
         self,
         camera,
         c_crossattn=None,
@@ -456,6 +456,11 @@ class Zero123Guidance(BaseObject):
         # cond[''] = c_crossattn_nearest
         return cond, {'c_crossattn_nearest': c_crossattn_nearest, 'nearest_idxs': nearest_idxs}
 
+    # XXX HERE main
+    # guidance_out = self.guidance(out["comp_rgb"], camera=batch, rgb_as_latents=False, guidance_eval=guidance_eval) 
+    # call the __call__ method.
+    # out["comp_rgb"] is nerf's rendered image for loss compute, 
+    # camera include extrinsic?
     def __call__(
         self,
         rgb: Float[Tensor, "B H W C"],
@@ -468,7 +473,7 @@ class Zero123Guidance(BaseObject):
 
         rgb_BCHW = rgb.permute(0, 3, 1, 2)
         latents: Float[Tensor, "B 4 64 64"]
-        if rgb_as_latents:
+        if rgb_as_latents: # which means, the input is a rgb image, not a latent representation
             latents = (
                 F.interpolate(rgb_BCHW, (32, 32), mode="bilinear", align_corners=False)
                 * 2
@@ -481,8 +486,10 @@ class Zero123Guidance(BaseObject):
             # encode image into latents with vae
             latents = self.encode_images(rgb_BCHW_512)
 
+        # from camera parameters generate conditions and auxiliary
         cond, aux = self.get_cond(camera)
 
+        # decide the time step length
         if self.cfg.use_anisotropic_schedule:
             azimuth_deg = camera["azimuth"] % 360
             degrees_from_canonical = torch.min(azimuth_deg, 360.0 - azimuth_deg)
@@ -539,7 +546,7 @@ class Zero123Guidance(BaseObject):
             # pred noise
             x_in = torch.cat([latents_noisy] * 2)
             t_in = torch.cat([t] * 2)
-            noise_pred = self.model.apply_model(x_in, t_in, cond)
+            noise_pred = self.model.apply_model(x_in, t_in, cond) # XXX HERE use Unet predict
 
         # perform guidance
         noise_pred_uncond, noise_pred_cond = noise_pred.chunk(2)
@@ -561,6 +568,7 @@ class Zero123Guidance(BaseObject):
             noise_pred_cond - noise_pred_uncond
         )
 
+        # compute loss SDS
         w = (1 - self.alphas[t]).reshape(-1, 1, 1, 1)
         grad = w * (noise_pred - noise)
         grad = torch.nan_to_num(grad)
@@ -572,8 +580,10 @@ class Zero123Guidance(BaseObject):
         # SpecifyGradient is not straghtforward, use a reparameterization trick instead
         target = (latents - grad).detach()
         # d(loss)/d(latents) = latents - target = latents - (latents - grad) = grad
-        loss_sds = 0.5 * F.mse_loss(latents, target, reduction="sum") / batch_size
+        loss_sds = 0.5 * F.mse_loss(latents, target, reduction="sum") / batch_size 
 
+
+        # use clip for more grad
         if aux['c_crossattn_nearest'] is not None:
             rgb_for_clip = rgb.permute((0, 3, 1,2))  # NHWC -> NCHW
             rgb_for_clip = rgb_for_clip *2 - 1
@@ -587,7 +597,7 @@ class Zero123Guidance(BaseObject):
         else:
             loss_clip = None
 
-        guidance_out = {
+        guidance_out = { # which has been return
             "loss_sds": loss_sds,
             "loss_clip": loss_clip,
             "grad_norm": grad.norm(),

@@ -80,8 +80,9 @@ class Zero123(BaseLift3DSystem):
     def on_fit_start(self) -> None:
         super().on_fit_start()
         # no prompt processor
+        # XXX HERE diffusion: zero123 self.guidance use diffusion generate images
         self.guidance: zero123_guidance.Zero123Guidance = threestudio.find(
-            self.cfg.guidance_type
+            self.cfg.guidance_type # it indeed is "zero123-guidance"
         )(self.cfg.guidance)
 
         # visualize all training images
@@ -180,6 +181,7 @@ class Zero123(BaseLift3DSystem):
                     1 - F.cosine_similarity(valid_pred_normal, valid_gt_normal).mean(),
                 )
         elif guidance == "zero123":
+            # XXX HERE zero123 diffusion
             # zero123
             if self.cfg.guidance.depth_threshold_for_anchor_guidance > 0:
                 mask_ref = {}

@@ -6,7 +6,11 @@
   - launch_inference.sh ->
   - launch.py ->
   - trainer.fit ->
-  - system = zero123system: base3dliftsystem: basesystem: lightningmodule
+  - system = zero123system: base3dliftsystem: basesystem: lightningmodule ->
+    - carry out getting guidance from diffusion and train nerf
+  - guidance = zero123_guidance in threestudio ->
+  - diffusion in zeronvs_diffusion/zero123/ldm
+
 
 - Input and Dataloader:
   - Single 2D Image -> datamodule: image/single-image-module
@@ -15,14 +19,37 @@
   - field-of-view data.
   - Scene Data: use pretrained models from datasets like CO3D, RealEstate10k, and ACID to handle in-the-wild scenes
 
-- Diffusion Model: A 2D conditional diffusion model synthesizes novel views as anchoring views
 
-- NeRF: these synthesized novel views are converted into 3D-consistent NeRF representation
+- Diffusion Model: A 2D conditional diffusion model synthesizes novel views as anchoring views
+  - use the zero123 pipeline to construct a camera-extrinsic-aware diffusion model
+  - train: objaverse ... (irrelevant to my task)
+  - sampling: 
+
+
+- NeRF: these synthesized novel views could be converted into 3D-consistent NeRF representation, when doing 3D Reconstruction task.
+  - train:
+    - network input: x, y, z, theta, phi
+    - network output: c, sigma
+    - use volume-rendering equation, from c and sigma generate novel view image
+    - compute loss between gt and syn, update the weights
+  - for every object, use the several diffusion-base anchored images to train a nerf and generate novel view.
+  - Here in zero123, it is a volume-radiance-field nerf???
+
   - SDS Distillation: calculate a loss between NeRF's synthesized images and diffusion model's synthesized images. then gradient discent and update NeRF's parameters 
+
+
+- it uses SDS or SJC? which one?
+- zero123 use SJC but zeronvs use SDS?
+- in zeroNVS, use SDS, and deprecate the 3d reconstruction part in zero123?
+
+- but why use nerf?
+- diffusion can generate novel view independently. voxel radiance field is used for 3d reconstruction. 
+- use the diffusion generated images to train a nerf, and use nerf to conveniently and efficiently generate more novel views??? for time-saving?
 
 - SDS Anchoring: Anchoring is used to generate multiple plausible novel views and increase diversity.
   - ??? what position at the workflow?
   - my task is trying to find some good anchoring views???
+
 
 - Output:
   - multiple new wiews images(rendered images for novel perspective)
@@ -33,16 +60,6 @@
 
 
 
-
-
-
-
-# questions and note
-- Pytorch Lightning: a lib for separating research code from engineering code.
-  - encapsulates operations such as model training, validation, testing, and prediction
-  - core components: LightningModule. Each model needs to inherit the LightningModule class and implement some key methods. responsible for defining the structure of the model, forward propagation, optimizer, etc.
-- why two config? zeronvs config and zero123 config?
-- $ in .sh is reference
 
 
 
@@ -77,10 +94,12 @@ loaded before diffusion...
 - for each novel camera pose find the nearest input camera pose, then use it generates novel view [ ]
   - find out diffusion inside ZeroNVS
   - use some 50 pics in dataset and try to generate the 51 pic
+  - why 50 -> 1? not 1 -> 50?
   - do not train SDS / nerf
   - follow the github link to ban SDS
   - get familiar with the code and project
-
+  - **but why use NeRF for novel view instead of straightly use diffusion?**
+    **why then ban SDS and then then straightly use diffusion?**
 
 
 

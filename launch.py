@@ -98,7 +98,8 @@ def main(args, extras) -> None:
 
     from ldm.models.diffusion import options
     options.LDM_DISTILLATION_ONLY = True # what is distillation only???
-    # XXX HERE: set diffusion model
+    # XXX HERE: set diffusion model, which is in zeronvs_diffusion
+    # but why ldm is in the root directory? because it is a submodule?
 
     logger = logging.getLogger("pytorch_lightning")
     if args.verbose:
@@ -196,6 +197,9 @@ def main(args, extras) -> None:
         )()
 
     # set the trainer
+    # pytorch lightning: a lib for separating research code from engineering code.
+    # encapsulates operations such as model training, validation, testing, and prediction
+    # core components: LightningModule. Each model needs to inherit the LightningModule class and implement some key methods. responsible for defining the structure of the model, forward propagation, optimizer, etc.
     trainer = Trainer(
         callbacks=callbacks,
         logger=loggers,
