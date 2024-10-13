@@ -18,8 +18,8 @@ from omegaconf import OmegaConf
 image_path = "data/image_test/000000_rgb.png" # 384x384, Expected size 32 but got size 48
 # image_path = "rs_dtu_4/DTU/scan6/image/000000.png" # 400x300, Expected size 32 but got size 37
 guidance_cfg = dict(
-    pretrained_model_name_or_path= "zeronvs.ckpt", # XXX 
-    pretrained_config= "zeronvs_config.yaml", # XXX 
+    pretrained_model_name_or_path= "zeronvs.ckpt", 
+    pretrained_config= "zeronvs_config.yaml", 
     guidance_scale= 7.5,
     cond_image_path =image_path,
     min_step_percent=[0,.75,.02,1000],
@@ -47,7 +47,7 @@ target_camera[:3, -1] = np.array([.125, .125, .125])  # perturb the cond pose
 target_camera = torch.from_numpy(target_camera[None]).cuda().to(torch.float32)
 cond_camera = torch.from_numpy(cond_camera[None]).cuda().to(torch.float32)
 camera_batch = {
-    "target_cam2world": target_camera,
+    "target_cam2world": target_camera, # need pose matrix
     "cond_cam2world": cond_camera,
     "fov_deg": torch.from_numpy(np.array([45.0])).cuda().to(torch.float32) # what is this?
 }
@@ -68,7 +68,7 @@ print(c_crossattn.shape) # (1,1,768)
 print("--------concat------------")
 print(c_concat.shape) # (1,4,48,48) Expected size 32 but got size 48 for tensor number 1 in the list.
 
-novel_view = guidance.gen_from_cond(cond) # BUG 
+novel_view = guidance.gen_from_cond(cond) 
 novel_view_pil = Image.fromarray(np.clip(novel_view[0]*255, 0, 255).astype(np.uint8))
 # display(cond_image_pil)
 # display(novel_view_pil)

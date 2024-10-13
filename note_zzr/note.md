@@ -98,8 +98,23 @@ loaded before diffusion...
   - do not train SDS / nerf
   - follow the github link to ban SDS
   - get familiar with the code and project
+  
   - **but why use NeRF for novel view instead of straightly use diffusion?**
-    **why then ban SDS and then then straightly use diffusion?**
+    - for higher image quality
+  - **why then ban SDS and then then straightly use diffusion?**
+
+
+1. For each novel camera pose: give a novel camera pose  
+    we should find the nearest input camera pose: give many input camera pose paired with images
+2. Generate the novel view use the nearest input image: use the nearest camera pose and the paired image(still a single image as condition) to generate images
+3. (Use all images (include input images and generated images) to train NeRF filed through the SDS method.)
+
+Use `python read_camera.py` to examine the data and become familiar with camera coordinates.
+
+? what is scale mat / world mat?  
+giving scale mat @ world mat = projection, scale mat is intrinsic and world mat is extrinsic?  
+then why don't we get intrinsic straightly from scale mat?
+
 
 
 
@@ -112,3 +127,8 @@ loaded before diffusion...
 ## 2
 - when choose --export
 - system.context_type = cuda
+
+
+
+
+world = world -> camera -> image = intrinsic * cw(E)
