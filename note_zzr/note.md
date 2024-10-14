@@ -90,7 +90,7 @@ loaded before diffusion...
 
 
 
-# ToDo
+# HaveDone
 - for each novel camera pose find the nearest input camera pose, then use it generates novel view [ ]
   - find out diffusion inside ZeroNVS
   - use some 50 pics in dataset and try to generate the 51 pic
@@ -99,21 +99,24 @@ loaded before diffusion...
   - follow the github link to ban SDS
   - get familiar with the code and project
   
-  - **but why use NeRF for novel view instead of straightly use diffusion?**
+  - but why use NeRF for novel view instead of straightly use diffusion?
     - for higher image quality
-  - **why then ban SDS and then then straightly use diffusion?**
+  - why then ban SDS and then then straightly use diffusion?
 
 
-1. For each novel camera pose: give a novel camera pose  
-    we should find the nearest input camera pose: give many input camera pose paired with images
-2. Generate the novel view use the nearest input image: use the nearest camera pose and the paired image(still a single image as condition) to generate images
-3. (Use all images (include input images and generated images) to train NeRF filed through the SDS method.)
-
-Use `python read_camera.py` to examine the data and become familiar with camera coordinates.
-
-? what is scale mat / world mat?  
-giving scale mat @ world mat = projection, scale mat is intrinsic and world mat is extrinsic?  
-then why don't we get intrinsic straightly from scale mat?
+# ToDo
+- for a single image in our dataset, render use SDS and use without SDS, and concat the same view into one image for compare.
+  - try to ban the remove validation image folder command to get the source image.
+  - try to find the built-in camera pose in nerf sampling
+    - zero123 system?
+    - zero123 guidance? x
+    - uncond?
+    - multiview?
+    - zero123_scene.yaml?
+    - zeronvs_config.yaml?
+  - so if we just have one image as condition, the find-nearest-camera-pose function is useless.
+  - we can simply pass the found camera pose in sds to the diffusion_guidance (can we?)(maybe add some processing process according to sds)
+- note, we just need a single cond image can initialize zero123_guidance
 
 
 

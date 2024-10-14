@@ -31,7 +31,7 @@ data: # threestudio/data/image.py -> SingleImageDataModuleConfig
   random_camera: # threestudio/data/uncond.py -> RandomCameraDataModuleConfig
     height: [128, 256]
     width: [128, 256]
-    batch_size: [2, 1] # XXX 
+    batch_size: [2, 1] # XXX 4 will cuda_out_of_memory at 2000, 2 is ok.
     resolution_milestones: [2000]
     eval_height: 256
     eval_width: 256
