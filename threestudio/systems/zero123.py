@@ -336,7 +336,7 @@ class Zero123(BaseLift3DSystem):
 
         return {"loss": total_loss}
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch, batch_idx): # XXX batch is what?
         out = self(batch)
         self.save_image_grid(
             f"it{self.true_global_step}-val/{batch['index'][0]}.png",
@@ -405,9 +405,10 @@ class Zero123(BaseLift3DSystem):
             name="validation_epoch_end",
             step=self.true_global_step,
         )
-        shutil.rmtree(
-            os.path.join(self.get_save_dir(), f"it{self.true_global_step}-val")
-        )
+        # XXX
+        # shutil.rmtree(
+        #     os.path.join(self.get_save_dir(), f"it{self.true_global_step}-val")
+        # )
 
     def _maybe_set_gt_to_pred_scale(self):
         if self.trainer.datamodule.cfg.view_synthesis is None:

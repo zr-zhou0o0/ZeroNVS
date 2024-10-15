@@ -106,7 +106,7 @@ loaded before diffusion...
 
 # ToDo
 - for a single image in our dataset, render use SDS and use without SDS, and concat the same view into one image for compare.
-  - try to ban the remove validation image folder command to get the source image.
+  - try to ban the remove validation image folder command to get the source image. [-]
   - try to find the built-in camera pose in nerf sampling
     - zero123 system?
     - zero123 guidance? x
@@ -117,7 +117,7 @@ loaded before diffusion...
   - so if we just have one image as condition, the find-nearest-camera-pose function is useless.
   - we can simply pass the found camera pose in sds to the diffusion_guidance (can we?)(maybe add some processing process according to sds)
 - note, we just need a single cond image can initialize zero123_guidance
-
+- so we should choose a novel view camera pose in the sds first, and use the find-nearest func find a cond image and generate a diffusion-only image, and pass the cond image to generate a sds image. 
 
 
 

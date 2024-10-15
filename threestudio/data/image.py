@@ -141,7 +141,7 @@ class SingleImageDataBase:
                 )
                 self.aux_c2ws.append(homogenize_poses(aux_c2w))
 
-        self.c2w = c2w
+        self.c2w = c2w # XXX HERE camera!
         self.camera_position = camera_position
         self.light_position = light_position
 
@@ -798,7 +798,7 @@ class ViewSynthesisCameraDataset(Dataset):
 
         self.rays_o, self.rays_d = rays_o, rays_d
         self.mvp_mtx = mvp_mtx
-        self.c2w = c2w
+        self.c2w = c2w # XXX HERE camera to world
         self.camera_positions = camera_positions
         self.light_positions = light_positions
         # self.elevation, self.azimuth = elevation, azimuth
@@ -815,7 +815,7 @@ class ViewSynthesisCameraDataset(Dataset):
             "rays_o": self.rays_o[index],
             "rays_d": self.rays_d[index],
             "mvp_mtx": self.mvp_mtx[index],
-            "c2w": self.c2w[index],
+            "c2w": self.c2w[index], # XXX HERE it is
             "fov_deg": self.fov_deg[index],
             "camera_positions": self.camera_positions[index],
             "light_positions": self.light_positions[index],
@@ -849,7 +849,7 @@ class ViewSynthesisImageDataset(Dataset, SingleImageDataBase):
         return len(self.random_pose_generator)
 
     def __getitem__(self, index):
-        item = self.random_pose_generator[index]
+        item = self.random_pose_generator[index] # XXX HERE the random camera pose
         item["gt_rgb"] = self.images[item["index"]]
         return item
 
