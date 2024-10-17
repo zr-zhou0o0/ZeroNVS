@@ -128,19 +128,19 @@ from omegaconf import OmegaConf
 
 
 # 'gl9' BEST
-def opencv_to_opengl(pose):
-    # 定义反射矩阵 S
-    S = np.diag([1, 1, -1])
+# def opencv_to_opengl(pose):
+#     # 定义反射矩阵 S
+#     S = np.diag([1, 1, -1])
 
-    R = pose[:3,:3]
-    # R = np.transpose(R)
+#     R = pose[:3,:3]
+#     # R = np.transpose(R)
 
-    # 计算新的旋转矩阵 R'
-    R_prime = R @ S
+#     # 计算新的旋转矩阵 R'
+#     R_prime = R @ S
 
-    pose_gl = pose.copy()
-    pose_gl[:3,:3] = R_prime
-    return pose_gl
+#     pose_gl = pose.copy()
+#     pose_gl[:3,:3] = R_prime
+#     return pose_gl
 
 
 # 'gl10'
@@ -157,6 +157,28 @@ def opencv_to_opengl(pose):
 #     pose_gl = pose.copy()
 #     pose_gl[:3,:3] = R_prime
 #     return pose_gl
+
+
+# 'gl11' 
+# TODO 
+def opencv_to_opengl(pose):
+    # 定义反射矩阵 S
+    S = np.diag([1, 1, -1])
+
+    R = pose[:3,:3]
+    # R = np.transpose(R)
+
+    # 计算新的旋转矩阵 R'
+    R_prime = R @ S
+
+    # R_prime[1,:] = -R_prime[1,:]
+    S2 = np.diag([1, -1, 1]) 
+    R_prime = S2 @ R_prime
+
+    pose_gl = pose.copy()
+    pose_gl[:3,:3] = R_prime
+    return pose_gl
+
 
 
 

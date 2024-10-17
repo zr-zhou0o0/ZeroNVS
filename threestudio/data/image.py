@@ -103,7 +103,7 @@ class SingleImageDataBase:
         elevation = elevation_deg * math.pi / 180
         azimuth = azimuth_deg * math.pi / 180
 
-        def get_defaults(azimuth):
+        def get_defaults(azimuth): # XXX HERE maybe?
             camera_position: Float[Tensor, "1 3"] = torch.stack(
                 [
                     camera_distance * torch.cos(elevation) * torch.cos(azimuth),
@@ -321,15 +321,15 @@ class SingleImageIterableDataset(IterableDataset, SingleImageDataBase, Updateabl
         super().__init__()
         self.setup(cfg, split)
 
-    def collate(self, batch) -> Dict[str, Any]:
-        batch = {
+    def collate(self, batch) -> Dict[str, Any]: # combine many single sample to a batch
+        batch = { # XXX batch!
             "rays_o": self.rays_o,
             "rays_d": self.rays_d,
             "mvp_mtx": self.mvp_mtx,
             "camera_positions": self.camera_position,
             "light_positions": self.light_position,
             "elevation": self.elevation_deg,
-            "azimuth": self.azimuth_deg,
+            "azimuth": self.azimuth_deg, # XXX HERE
             "camera_distances": self.camera_distance,
             "rgb": self.rgb,
             "ref_depth": self.depth,
@@ -992,7 +992,7 @@ class SingleImageDataModule(pl.LightningDataModule):
             collate_fn=self.train_dataset.collate,
         )
 
-    def val_dataloader(self) -> DataLoader:
+    def val_dataloader(self) -> DataLoader: # the '->' is a type hint
         return self.general_loader(self.val_dataset, batch_size=1)
 
     def test_dataloader(self) -> DataLoader:

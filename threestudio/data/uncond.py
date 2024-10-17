@@ -338,21 +338,21 @@ class RandomCameraIterableDataset(IterableDataset, Updateable):
         }
 
 
-class RandomCameraDataset(Dataset):
+class RandomCameraDataset(Dataset): # XXX __getitem___
     def __init__(self, cfg: Any, split: str) -> None:
         super().__init__()
         self.cfg: RandomCameraDataModuleConfig = cfg
         self.split = split
 
         if split == "val":
-            self.n_views = self.cfg.n_val_views
+            self.n_views = self.cfg.n_val_views # XXX n_val_views = 240
         else:
             self.n_views = self.cfg.n_test_views
 
         azimuth_deg: Float[Tensor, "B"]
-        if self.split == "val":
+        if self.split == "val": # XXX HERE!!! VAL CAMERA AZIMUTH! cfg=cfg, split=val
             # make sure the first and last view are not the same
-            azimuth_deg = torch.linspace(0, 360.0, self.n_views + 1)[: self.n_views]
+            azimuth_deg = torch.linspace(0, 360.0, self.n_views + 1)[: self.n_views] # so the camera view is default(azimuth)?
         else:
             azimuth_deg = torch.linspace(0, 360.0, self.n_views)
         elevation_deg: Float[Tensor, "B"] = torch.full_like(
@@ -398,7 +398,7 @@ class RandomCameraDataset(Dataset):
             [torch.stack([right, up, -lookat], dim=-1), camera_positions[:, :, None]],
             dim=-1,
         )
-        c2w: Float[Tensor, "B 4 4"] = torch.cat(
+        c2w: Float[Tensor, "B 4 4"] = torch.cat( # type hint, B is batchsize
             [c2w3x4, torch.zeros_like(c2w3x4[:, :1])], dim=1
         )
         c2w[:, 3, 3] = 1.0
@@ -425,7 +425,7 @@ class RandomCameraDataset(Dataset):
 
         self.rays_o, self.rays_d = rays_o, rays_d
         self.mvp_mtx = mvp_mtx
-        self.c2w = c2w
+        self.c2w = c2w # this 
         self.camera_positions = camera_positions
         self.light_positions = light_positions
         self.elevation, self.azimuth = elevation, azimuth
@@ -442,11 +442,11 @@ class RandomCameraDataset(Dataset):
             "fov_deg": self.fov_deg[index],
             "rays_d": self.rays_d[index],
             "mvp_mtx": self.mvp_mtx[index],
-            "c2w": self.c2w[index],
+            "c2w": self.c2w[index], # XXX HERE val return 
             "camera_positions": self.camera_positions[index],
             "light_positions": self.light_positions[index],
             "elevation": self.elevation_deg[index],
-            "azimuth": self.azimuth_deg[index],
+            "azimuth": self.azimuth_deg[index], # yes
             "camera_distances": self.camera_distances[index],
             "height": self.cfg.eval_height,
             "width": self.cfg.eval_width,

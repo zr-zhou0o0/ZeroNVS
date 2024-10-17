@@ -107,7 +107,7 @@ loaded before diffusion...
 # ToDo
 - for a single image in our dataset, render use SDS and use without SDS, and concat the same view into one image for compare.
   - try to ban the remove validation image folder command to get the source image. [-]
-  - try to find the built-in camera pose in nerf sampling
+  - try to find the built-in camera pose in nerf sampling [-]
     - zero123 system?
     - zero123 guidance? x
     - uncond?
@@ -118,7 +118,7 @@ loaded before diffusion...
   - we can simply pass the found camera pose in sds to the diffusion_guidance (can we?)(maybe add some processing process according to sds)
 - note, we just need a single cond image can initialize zero123_guidance
 - so we should choose a novel view camera pose in the sds first, and use the find-nearest func find a cond image and generate a diffusion-only image, and pass the cond image to generate a sds image. 
-
+- another problem: different origin point choice. of sds and dif.
 
 
 
@@ -135,3 +135,19 @@ loaded before diffusion...
 
 
 world = world -> camera -> image = intrinsic * cw(E)
+
+
+
+
+# what
+the simple and effective way is change the direction of y axis. so if i simply change the figure's y axis... the gl9 is correct! but i don't know what is the y axis of world coord in the zero123_diffusion and sds...test it!
+
+the second question is, why change the R's y column have no effect???
+ah! that is beacuse, the forward_vector is just the third column's negative!
+e.g.
+[[-0.5000, -0.4460,  0.7423],
+[ 0.8660, -0.2575,  0.4286],
+[ 0.0000,  0.8572,  0.5150]]
+forward_vector = P @ [0, 0, -1]
+up_vector = P @ [0, 1, 0]
+right_vector = P @ [1, 0, 0]
