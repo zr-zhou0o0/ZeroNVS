@@ -96,14 +96,14 @@ class SingleImageDataBase:
                     random_camera_cfg, split
                 )
 
-        elevation_deg = torch.FloatTensor([self.cfg.default_elevation_deg])
+        elevation_deg = torch.FloatTensor([self.cfg.default_elevation_deg]) # XXX default camera azimuth.
         azimuth_deg = torch.FloatTensor([self.cfg.default_azimuth_deg])
         camera_distance = torch.FloatTensor([self.cfg.default_camera_distance])
 
         elevation = elevation_deg * math.pi / 180
         azimuth = azimuth_deg * math.pi / 180
 
-        def get_defaults(azimuth): # XXX HERE maybe?
+        def get_defaults(azimuth): # XXX HERE the default camera pose! default azimuth see above
             camera_position: Float[Tensor, "1 3"] = torch.stack(
                 [
                     camera_distance * torch.cos(elevation) * torch.cos(azimuth),

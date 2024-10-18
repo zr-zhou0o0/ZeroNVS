@@ -9,12 +9,7 @@ from launch_noSDS_camera import get_camera_poses
 def plot_camera_pose(T, ax=None, label='Camera', color='r', our_dataset=False, vert_ax='y', hori_ax='x'):
     """
     view_camera
-    args:
-    - T: 4x4 pose c2w
-    - ax: matplotlib 的 Axes 对象。如果为 None，则创建新的图形
-    - scale: 方向向量的缩放比例
-    - label: 相机的标签
-    - color: 方向向量的颜色
+    T: 4x4 pose c2w
     """
     if ax is None:
         fig, ax = plt.subplots()
@@ -27,31 +22,29 @@ def plot_camera_pose(T, ax=None, label='Camera', color='r', our_dataset=False, v
         y *= 15
         z *= 15
 
-    direction = -T[:3, 2]  # 前方向向量
+    direction = -T[:3, 2]  # forward_vector
     dir_x, dir_y, dir_z = direction
 
 
+    # normalize
     arrow_length = 0.5
-    # 归一化方向向量
     norm = np.linalg.norm(direction)
     if norm == 0:
-        print(f"警告: 相机 {label} 的方向向量长度为零，无法归一化。")
+        print('camera vector length is 0')
         normalized_direction = direction
     else:
         normalized_direction = direction / norm
 
-    # 固定箭头长度
+    # fix length
     dir_x, dir_y, dir_z = normalized_direction[0], normalized_direction[1], normalized_direction[2]
     arrow_dx = arrow_length * dir_x
     arrow_dy = arrow_length * dir_y
     arrow_dz = arrow_length * dir_z
 
     if (vert_ax == 'y') & (hori_ax == 'x'):
-        # 绘制相机位置
         # ax.plot(x, y, 'o', color=(139/255, 200/255, 227/255))
         ax.plot(x, y, 'o', color=color)
 
-        # 绘制方向箭头
         ax.arrow(x, y, arrow_dx, arrow_dy, head_width=0.1, head_length=0.1, fc=color, ec=color)
         print("arrow: x={:.2f}, y={:.2f}, z={:.2f}, dx={:.2f}, dy={:.2f}, dz={:.2f}".format(x, y, z, dir_x, dir_y, dir_z))
         
@@ -98,7 +91,7 @@ def plot_camera_pose(T, ax=None, label='Camera', color='r', our_dataset=False, v
 if __name__ == '__main__':
 
     # SET THIS
-    save_path = "data/view_camera/15_gl11_y-x.png"
+    save_path = "data/view_camera/18_new_cv_y-x.png"
     vert_ax = 'y'
     hori_ax = 'x'
     view_space = 1
@@ -109,10 +102,10 @@ if __name__ == '__main__':
 
 
 
-    # colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k'] # 循环使用颜色
+    # colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
     num_cameras = len(poses)
-    cmap = cm.get_cmap('Spectral')  # 选择一个colormap
-    colors = [cmap(i / num_cameras) for i in range(num_cameras)]  # 生成渐变颜色列表
+    cmap = cm.get_cmap('Spectral')  # colormap
+    colors = [cmap(i / num_cameras) for i in range(num_cameras)] 
         
     fig, ax = plt.subplots(figsize=(10, 8))
 

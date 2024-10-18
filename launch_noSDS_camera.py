@@ -127,7 +127,7 @@ from omegaconf import OmegaConf
 #     return pose_gl
 
 
-# 'gl9' BEST
+# 'gl9'
 # def opencv_to_opengl(pose):
 #     # 定义反射矩阵 S
 #     S = np.diag([1, 1, -1])
@@ -159,8 +159,7 @@ from omegaconf import OmegaConf
 #     return pose_gl
 
 
-# 'gl11' 
-# TODO 
+# 'gl11' CORRECT
 def opencv_to_opengl(pose):
     # 定义反射矩阵 S
     S = np.diag([1, 1, -1])
@@ -202,12 +201,12 @@ def load_K_Rt_from_P(filename, P=None):
 
     pose = np.eye(4, dtype=np.float32)
     pose[:3, :3] = R.transpose() # is it R(pose) or R(extrinsic)? take as extrinsic rotation. TODO confirm it.
-    pose[:3,3] = (t[:3] / t[3])[:,0] # BUG why not t be inversed? it is the position of camera. but why it is error?
+    pose[:3,3] = (t[:3] / t[3])[:,0] 
 
     return intrinsics, pose, euler_angle
 
 
-# XXX what decompose get???
+# what decompose get? -> opencv_decomposeprojection document.
 # def load_K_Rt_from_P(filename, P=None):
 #     if P is None:
 #         lines = open(filename).read().splitlines()
@@ -303,7 +302,6 @@ def vector_to_euler(forward_vector, up_vector):
 # TODO model translation and euler, use these to choose the nearest camera
 # if translation and euler is correct, then can use it; if not, the pose(either opencv or opengl) can't be used. except euler is wrong but the rotation matrix is correct (will it?)
 # so translation is correct.
-# TODO try to confirm which of the 3 gl converter is correct.
 def get_camera_poses(cam_file_path):
     camera_dict = np.load(cam_file_path)
     n_images = len(camera_dict.files) // 2
@@ -323,7 +321,7 @@ def get_camera_poses(cam_file_path):
         P = P[:3, :4]
         intrinsics, pose, euler_angle_returned = load_K_Rt_from_P(None, P)
 
-        pose = opencv_to_opengl(pose) # 'gl2': here to convert to opengl
+        # pose = opencv_to_opengl(pose) # 'gl2': here to convert to opengl
 
         # because we do resize and center crop 384x384 when using omnidata model, we need to adjust the camera intrinsic accordingly
         scale = 384 / 680 # raw is 680 and resized image is 384
@@ -505,7 +503,7 @@ def launch():
     
     img_path = 'data/image_test'
     cam_file = 'data/cameras.npz'
-    output_path = 'data/image_output/32_gl9_0t_1r'
+    output_path = 'data/image_output/35_gl11_50t_1r_new_camera'
     intrinsic_all, pose_all, euler_returned_all = get_camera_poses(cam_file)
     intrinsic = intrinsic_all[0]
     cond_poses, cond_idx = get_cond_camera_poses(pose_all)
@@ -529,98 +527,98 @@ def launch():
     print(f"Saved all condition images to: {cond_image_output_path}")
 
     for i, idx in enumerate(target_idx):
+        if i % 3 == 0:
+            target_pose = pose_all[idx]
+            target_euler = euler_returned_all[idx]
+            nearest_cond_pose, nearest_cond_idx = find_nearest_cond(target_pose, cond_poses, cond_idx, alpha=50, beta=1, target_euler=target_euler, euler_all=cond_euler) # XXX
+            # nearest_cond_pose, nearest_cond_idx = find_nearest_cond(target_pose, cond_poses, cond_idx)
 
-        target_pose = pose_all[idx]
-        target_euler = euler_returned_all[idx]
-        nearest_cond_pose, nearest_cond_idx = find_nearest_cond(target_pose, cond_poses, cond_idx, alpha=0, beta=1, target_euler=target_euler, euler_all=cond_euler) # XXX
-        # nearest_cond_pose, nearest_cond_idx = find_nearest_cond(target_pose, cond_poses, cond_idx)
+            # target_pose_gl = opencv_to_opengl(target_pose)
+            # nearest_cond_pose_gl = opencv_to_opengl(nearest_cond_pose)
+            target_pose_gl = target_pose
+            nearest_cond_pose_gl = nearest_cond_pose
 
-        # target_pose_gl = opencv_to_opengl(target_pose)
-        # nearest_cond_pose_gl = opencv_to_opengl(nearest_cond_pose)
-        target_pose_gl = target_pose
-        nearest_cond_pose_gl = nearest_cond_pose
+            cond_img_path = os.path.join(img_path, f'{nearest_cond_idx:06d}_rgb.png')
+            # image_path = "data/image_test/000000_rgb.png" # 384x384, Expected size 32 but got size 48
+            
 
-        cond_img_path = os.path.join(img_path, f'{nearest_cond_idx:06d}_rgb.png')
-        # image_path = "data/image_test/000000_rgb.png" # 384x384, Expected size 32 but got size 48
+            guidance_cfg = dict(
+                pretrained_model_name_or_path= "zeronvs.ckpt", 
+                pretrained_config= "zeronvs_config.yaml", 
+                guidance_scale= 7.5,
+                cond_image_path =cond_img_path,
+                min_step_percent=[0,.75,.02,1000],
+                max_step_percent=[1000, 0.98, 0.025, 2500],
+                vram_O=False 
+            )
+            guidance = zero123_guidance.Zero123Guidance(OmegaConf.create(guidance_cfg))
         
 
-        guidance_cfg = dict(
-            pretrained_model_name_or_path= "zeronvs.ckpt", 
-            pretrained_config= "zeronvs_config.yaml", 
-            guidance_scale= 7.5,
-            cond_image_path =cond_img_path,
-            min_step_percent=[0,.75,.02,1000],
-            max_step_percent=[1000, 0.98, 0.025, 2500],
-            vram_O=False 
-        )
-        guidance = zero123_guidance.Zero123Guidance(OmegaConf.create(guidance_cfg))
-       
+            cond_image_pil = Image.open(cond_img_path).convert("RGB")
+            cond_image_pil = cond_image_pil.resize((256, 256)) # XXX
+            cond_image = torch.from_numpy(np.array(cond_image_pil)).cuda() / 255.
 
-        cond_image_pil = Image.open(cond_img_path).convert("RGB")
-        cond_image_pil = cond_image_pil.resize((256, 256)) # XXX
-        cond_image = torch.from_numpy(np.array(cond_image_pil)).cuda() / 255.
+            c_crossattn, c_concat = guidance.get_img_embeds(
+                cond_image.permute((2, 0, 1))[None]) # change (H, W, C) to (C, H, W)
+            
+            cond_camera = nearest_cond_pose_gl
+            target_camera = target_pose_gl
+            target_camera = torch.from_numpy(target_camera[None]).cuda().to(torch.float32)
+            cond_camera = torch.from_numpy(cond_camera[None]).cuda().to(torch.float32)
+            camera_batch = {
+                "target_cam2world": target_camera, 
+                "cond_cam2world": cond_camera,
+                # "fov_deg": torch.from_numpy(np.array([45.0])).cuda().to(torch.float32) 
+                "fov_deg": fov_tensor # XXX horizontal field of view, degree
+            }
 
-        c_crossattn, c_concat = guidance.get_img_embeds(
-            cond_image.permute((2, 0, 1))[None]) # change (H, W, C) to (C, H, W)
-        
-        cond_camera = nearest_cond_pose_gl
-        target_camera = target_pose_gl
-        target_camera = torch.from_numpy(target_camera[None]).cuda().to(torch.float32)
-        cond_camera = torch.from_numpy(cond_camera[None]).cuda().to(torch.float32)
-        camera_batch = {
-            "target_cam2world": target_camera, 
-            "cond_cam2world": cond_camera,
-            # "fov_deg": torch.from_numpy(np.array([45.0])).cuda().to(torch.float32) 
-            "fov_deg": fov_tensor # XXX horizontal field of view, degree
-        }
+            guidance.cfg.precomputed_scale=.7
+            cond = guidance.get_cond_from_known_camera(
+                camera_batch,
+                c_crossattn=c_crossattn,
+                c_concat=c_concat,
+                # precomputed_scale=.7,
+            )
 
-        guidance.cfg.precomputed_scale=.7
-        cond = guidance.get_cond_from_known_camera(
-            camera_batch,
-            c_crossattn=c_crossattn,
-            c_concat=c_concat,
-            # precomputed_scale=.7,
-        )
+            print("------camerabatch--------")
+            print(camera_batch["cond_cam2world"]) 
+            print(camera_batch["target_cam2world"]) 
+            print("------crossattn----------")
+            print(c_crossattn.shape) # (1,1,768)
+            print("--------concat------------")
+            print(c_concat.shape) # (1,4,48,48) Expected size 32 but got size 48 for tensor number 1 in the list.
 
-        print("------camerabatch--------")
-        print(camera_batch["cond_cam2world"]) 
-        print(camera_batch["target_cam2world"]) 
-        print("------crossattn----------")
-        print(c_crossattn.shape) # (1,1,768)
-        print("--------concat------------")
-        print(c_concat.shape) # (1,4,48,48) Expected size 32 but got size 48 for tensor number 1 in the list.
+            novel_view = guidance.gen_from_cond(cond) 
+            novel_view_pil = Image.fromarray(np.clip(novel_view[0]*255, 0, 255).astype(np.uint8))
+            # display(cond_image_pil)
+            # display(novel_view_pil)
 
-        novel_view = guidance.gen_from_cond(cond) 
-        novel_view_pil = Image.fromarray(np.clip(novel_view[0]*255, 0, 255).astype(np.uint8))
-        # display(cond_image_pil)
-        # display(novel_view_pil)
+            target_path = os.path.join(img_path, f'{idx:06d}_rgb.png')
+            print("target_path=",target_path)
+            target_pil = Image.open(target_path).convert("RGB").resize((256, 256))
 
-        target_path = os.path.join(img_path, f'{idx:06d}_rgb.png')
-        print("target_path=",target_path)
-        target_pil = Image.open(target_path).convert("RGB").resize((256, 256))
+            # concatenate images
+            cond_image_array = np.array(cond_image_pil)
+            target_image_array = np.array(target_pil)
+            novel_image_array = np.array(novel_view_pil)
 
-        # concatenate images
-        cond_image_array = np.array(cond_image_pil)
-        target_image_array = np.array(target_pil)
-        novel_image_array = np.array(novel_view_pil)
+            # min_height = min(cond_image_array.shape[0], target_image_array.shape[0], novel_image_array.shape[0])
+            # cond_image_array = cond_image_array[:min_height]
+            # target_image_array = target_image_array[:min_height]
+            # novel_image_array = novel_image_array[:min_height]
 
-        # min_height = min(cond_image_array.shape[0], target_image_array.shape[0], novel_image_array.shape[0])
-        # cond_image_array = cond_image_array[:min_height]
-        # target_image_array = target_image_array[:min_height]
-        # novel_image_array = novel_image_array[:min_height]
-
-        concatenated = np.hstack((cond_image_array, target_image_array, novel_image_array))
-        concatenated_image = Image.fromarray(concatenated)
-        if not os.path.exists(os.path.join(output_path, 'concat')):
-            os.makedirs(os.path.join(output_path, 'concat'))
-        concatenated_save_path = os.path.join(output_path, f'concat/{i}_t{idx:03d}_c{nearest_cond_idx:03d}_concatenated.png')
-        concatenated_image.save(concatenated_save_path)
+            concatenated = np.hstack((cond_image_array, target_image_array, novel_image_array))
+            concatenated_image = Image.fromarray(concatenated)
+            if not os.path.exists(os.path.join(output_path, 'concat')):
+                os.makedirs(os.path.join(output_path, 'concat'))
+            concatenated_save_path = os.path.join(output_path, f'concat/{i}_t{idx:03d}_c{nearest_cond_idx:03d}_concatenated.png')
+            concatenated_image.save(concatenated_save_path)
 
 
-        # cond_save_path = os.path.join(output_path, f'{i}_{nearest_cond_idx:06d}_cond.png')
-        # novel_save_path = os.path.join(output_path, f'{i}_{idx:06d}_novel.png')
-        # cond_image_pil.save(cond_save_path)
-        # novel_view_pil.save(novel_save_path)
+            # cond_save_path = os.path.join(output_path, f'{i}_{nearest_cond_idx:06d}_cond.png')
+            # novel_save_path = os.path.join(output_path, f'{i}_{idx:06d}_novel.png')
+            # cond_image_pil.save(cond_save_path)
+            # novel_view_pil.save(novel_save_path)
 
         
 

@@ -1,4 +1,4 @@
-#copy from threestudio/data/uncond.py
+# copy from threestudio/data/uncond.py
 
 import bisect
 import math
@@ -99,6 +99,48 @@ def test_camera():
 
 
     return c2w
+
+
+def get_defaults(): 
+
+    elevation_deg = torch.FloatTensor([20.0])
+    azimuth_deg = torch.FloatTensor([0.0])
+    camera_distance = torch.FloatTensor([1.0])
+
+    elevation = elevation_deg * math.pi / 180
+    azimuth = azimuth_deg * math.pi / 180
+
+
+    camera_position: Float[Tensor, "1 3"] = torch.stack(
+        [
+            camera_distance * torch.cos(elevation) * torch.cos(azimuth),
+            camera_distance * torch.cos(elevation) * torch.sin(azimuth),
+            camera_distance * torch.sin(elevation),
+        ],
+        dim=-1,
+    )
+
+    center: Float[Tensor, "1 3"] = torch.zeros_like(camera_position)
+    up: Float[Tensor, "1 3"] = torch.as_tensor([0, 0, 1], dtype=torch.float32)[
+        None
+    ]
+
+    light_position: Float[Tensor, "1 3"] = camera_position
+    lookat: Float[Tensor, "1 3"] = F.normalize(center - camera_position, dim=-1)
+    right: Float[Tensor, "1 3"] = F.normalize(torch.cross(lookat, up), dim=-1)
+    up = F.normalize(torch.cross(right, lookat), dim=-1)
+    c2w: Float[Tensor, "1 3 4"] = torch.cat(
+        [
+            torch.stack([right, up, -lookat], dim=-1),
+            camera_position[:, :, None],
+        ],
+        dim=-1,
+    )
+    return c2w, light_position, camera_position
+
+
+# cond_camera, _, _ = get_defaults()
+# print('cond', cond_camera)
 
 
 '''

@@ -42,5 +42,5 @@ for ((i=0; i<7; i++)); do
         system.renderer.far_plane=1000.0 \
         system.guidance.use_anisotropic_schedule=true \
         system.guidance.anisotropic_offset=1000 \
-        system.exporter.context_type=cuda # XXX 
+        # system.exporter.context_type=cuda
 done

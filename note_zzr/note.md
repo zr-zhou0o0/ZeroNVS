@@ -142,12 +142,34 @@ world = world -> camera -> image = intrinsic * cw(E)
 # what
 the simple and effective way is change the direction of y axis. so if i simply change the figure's y axis... the gl9 is correct! but i don't know what is the y axis of world coord in the zero123_diffusion and sds...test it!
 
-the second question is, why change the R's y column have no effect???
-ah! that is beacuse, the forward_vector is just the third column's negative!
-e.g.
-[[-0.5000, -0.4460,  0.7423],
-[ 0.8660, -0.2575,  0.4286],
-[ 0.0000,  0.8572,  0.5150]]
-forward_vector = P @ [0, 0, -1]
-up_vector = P @ [0, 1, 0]
-right_vector = P @ [1, 0, 0]
+the second question is, why change the R's y column have no effect???  
+ah! that is beacuse, the forward_vector is just the third column's negative!  
+e.g.  
+[[-0.5000, -0.4460,  0.7423],  
+[ 0.8660, -0.2575,  0.4286],  
+[ 0.0000,  0.8572,  0.5150]]  
+forward_vector = P @ [0, 0, -1]  
+up_vector = P @ [0, 1, 0]  
+right_vector = P @ [1, 0, 0]  
+
+
+so the answer is obvious: the world coordinate system's y is inversed. not the camera coordinate system's y is inversed.  
+if change camera's y, only flip over the camera vector itself in place.  
+change the world's y, the forward vector will flip over to a different angle.  
+
+
+so, the data/view_camera/15_gl11_y-x.png prove that, the translation and the rotation recorded are both inaccurate.  
+the recorded camera pose's horizontal angle is righter than real camera pose's euler angle. 
+
+
+
+50~/80~/use.
+
+
+# Two Ways for comparison
+- a given cond image, and two pose: one default, one somelike 30 degree. without coordinate system converting. [-]
+- a required target pose in dataset's coordinate system. 
+  - use find_nearest_camera to get a cond image.
+  - use the cond image to generate noSDS image.
+  - use $P_n(default) = M_nd * P_d(cond)$ get $M_nd$, then $P_n(target) = M_nd * P_d(target)$ to get $P_n(target)$. where n is nerf coordinate, d is dataset coordinate. [-]
+  - change the validate process in zero123, let it generates the target coordinate.

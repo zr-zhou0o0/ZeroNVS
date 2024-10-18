@@ -4,11 +4,13 @@ CONFIG_PATH='zeronvs_config.yaml'
 
 # Set these yourself!
 # IMAGE_PATH='motorcycle.png'
-# FOV=52.55
+# FOV=42
 # ELEVATION_DEG=31.0
-IMAGE_PATH='data/scan6/image/000016_rgb.png'
-FOV=42
-ELEVATION_DEG=31.0
+
+# ‘cond=’
+IMAGE_PATH='data/image_test/000063_rgb.png'
+FOV=35
+ELEVATION_DEG=21.0
 
 # How close is the content to the camera (smaller is closer)
 # See paper for details.
