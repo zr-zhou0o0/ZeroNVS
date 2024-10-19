@@ -1,15 +1,10 @@
+'''
+Use diffusion_guidance generate novel views
+Input: a list of camera pose and images.
+target poses chosen from pose_all, cond images and cond poses chosen from pose_all
+'''
 # coordinate system used for cond_camera and target_camera: opengl
 # find the nearest cond camera pose for each novel camera pose
-'''
-Input: 
-novel camera poses (get from scale mat @ world mat): a list
-cond camera poses (get from scale mat @ world mat): a list
-cond images directory, match the idx of cond camera poses
-
-Output:
-novel images
-
-'''
 
 import os
 from PIL import Image
@@ -27,31 +22,20 @@ from omegaconf import OmegaConf
 # The convention is opengl (x axis right, y axis up, z axis facing towards the viewer) in camera-to-world format.
 # suppose in opencv, x axis right, y axis up, z axis facing towards the object
 
-# def opencv_to_opengl(pose):
-#     flip_yz = np.array([
-#         [1, 0,  0, 0],
-#         [0, -1, 0, 0],
-#         [0, 0, -1, 0],
-#         [0, 0,  0, 1]
-#     ])
-#     pose_opengl = flip_yz @ pose
-#     return pose_opengl
 
-
-# BUG which one?
-# 'gl3': R @ S, i.e.inverse column 2 and column 3
-# def opencv_to_opengl(pose):
-#     # 复制一份输入的矩阵，避免修改原始矩阵
-#     pose_gl = pose.copy()
+# 'gl3': R @ S, i.e.inverse camera's y and z axis
+def opencv_to_opengl(pose):
+    # 复制一份输入的矩阵，避免修改原始矩阵
+    pose_gl = pose.copy()
     
-#     # 将第二列 (索引 1) 和第三列 (索引 2) 取反
-#     pose_gl[:, 1] *= -1  # 第二列取反
-#     pose_gl[:, 2] *= -1  # 第三列取反
+    # 将第二列 (索引 1) 和第三列 (索引 2) 取反
+    pose_gl[:, 1] *= -1  # 第二列取反
+    pose_gl[:, 2] *= -1  # 第三列取反
     
-#     return pose_gl
+    return pose_gl
 
 
-# SRS, 'gl4'
+# SRS, 'gl4' inverse world's and camera's x and z axis
 # def opencv_to_opengl(pose):
 #     # 定义反射矩阵 S
 #     S = np.diag([1, -1, -1])
@@ -66,8 +50,7 @@ from omegaconf import OmegaConf
 #     return pose_gl
 
 
-# SR, 'gl5'
-# the right one...?
+# 'gl5', inverse world's y and z axis
 # def opencv_to_opengl(pose):
 #     # 定义反射矩阵 S
 #     S = np.diag([1, -1, -1])
@@ -82,7 +65,7 @@ from omegaconf import OmegaConf
 #     return pose_gl
 
 
-# 'gl6'
+# 'gl6' inverse camera's x and z axis
 # def opencv_to_opengl(pose):
 #     # 定义反射矩阵 S
 #     S = np.diag([-1, 1, -1])
@@ -97,7 +80,7 @@ from omegaconf import OmegaConf
 #     return pose_gl
 
 
-#'gl7'
+#'gl7' inverse camera's x axis
 # def opencv_to_opengl(pose):
 #     # 定义反射矩阵 S
 #     S = np.diag([-1, 1, 1])
@@ -112,7 +95,7 @@ from omegaconf import OmegaConf
 #     return pose_gl
 
 
-# 'gl8'
+# 'gl8' inverse world's x axis
 # def opencv_to_opengl(pose):
 #     # 定义反射矩阵 S
 #     S = np.diag([-1, 1, 1])
@@ -127,7 +110,39 @@ from omegaconf import OmegaConf
 #     return pose_gl
 
 
-# 'gl9'
+# 'gl9' inverse camera's z axis
+# CORRECT, according to view_camera
+# however sometimes z will be error
+# def opencv_to_opengl(pose):
+#     # 定义反射矩阵 S
+#     S = np.diag([1, 1, -1])
+
+#     R = pose[:3,:3]
+
+#     # 计算新的旋转矩阵 R'
+#     R_prime = R @ S
+
+#     pose_gl = pose.copy()
+#     pose_gl[:3,:3] = R_prime
+#     return pose_gl
+
+
+# 'gl10' inverse world's z and camera's z axis
+# def opencv_to_opengl(pose):
+#     # 定义反射矩阵 S
+#     S = np.diag([1, 1, -1])
+
+#     R = pose[:3,:3]
+
+#     # 计算新的旋转矩阵 R'
+#     R_prime = S @ R @ S
+
+#     pose_gl = pose.copy()
+#     pose_gl[:3,:3] = R_prime
+#     return pose_gl
+
+
+# 'gl11'  inverse camera's z axis and world's y axis
 # def opencv_to_opengl(pose):
 #     # 定义反射矩阵 S
 #     S = np.diag([1, 1, -1])
@@ -138,12 +153,17 @@ from omegaconf import OmegaConf
 #     # 计算新的旋转矩阵 R'
 #     R_prime = R @ S
 
+#     # R_prime[1,:] = -R_prime[1,:]
+#     S2 = np.diag([1, -1, 1]) 
+#     R_prime = S2 @ R_prime
+
 #     pose_gl = pose.copy()
 #     pose_gl[:3,:3] = R_prime
 #     return pose_gl
 
 
-# 'gl10'
+# 'gl12' inverse world's y axis
+# TODO to modify.
 # def opencv_to_opengl(pose):
 #     # 定义反射矩阵 S
 #     S = np.diag([1, 1, -1])
@@ -152,32 +172,15 @@ from omegaconf import OmegaConf
 #     # R = np.transpose(R)
 
 #     # 计算新的旋转矩阵 R'
-#     R_prime = S @ R @ S
+#     R_prime = R @ S
+
+#     # R_prime[1,:] = -R_prime[1,:]
+#     S2 = np.diag([1, -1, 1]) 
+#     R_prime = S2 @ R_prime
 
 #     pose_gl = pose.copy()
 #     pose_gl[:3,:3] = R_prime
 #     return pose_gl
-
-
-# 'gl11' CORRECT
-def opencv_to_opengl(pose):
-    # 定义反射矩阵 S
-    S = np.diag([1, 1, -1])
-
-    R = pose[:3,:3]
-    # R = np.transpose(R)
-
-    # 计算新的旋转矩阵 R'
-    R_prime = R @ S
-
-    # R_prime[1,:] = -R_prime[1,:]
-    S2 = np.diag([1, -1, 1]) 
-    R_prime = S2 @ R_prime
-
-    pose_gl = pose.copy()
-    pose_gl[:3,:3] = R_prime
-    return pose_gl
-
 
 
 
@@ -321,7 +324,7 @@ def get_camera_poses(cam_file_path):
         P = P[:3, :4]
         intrinsics, pose, euler_angle_returned = load_K_Rt_from_P(None, P)
 
-        # pose = opencv_to_opengl(pose) # 'gl2': here to convert to opengl
+        pose = opencv_to_opengl(pose)
 
         # because we do resize and center crop 384x384 when using omnidata model, we need to adjust the camera intrinsic accordingly
         scale = 384 / 680 # raw is 680 and resized image is 384
@@ -395,7 +398,7 @@ def get_cond_camera_poses(pose_all):
     # suppose every 10th image are conditions, the rest are novel view
     cond_poses = []
     cond_idx = []
-    input_camera_spacing = 6                                  
+    input_camera_spacing = 3                                  
     for idx, pose in enumerate(pose_all):
         if idx % input_camera_spacing == 0:
             cond_poses.append(pose)
@@ -406,7 +409,7 @@ def get_cond_camera_poses(pose_all):
 def get_target_camera_poses(pose_all):
     target_poses = []
     target_idx = []
-    input_camera_spacing = 6                                
+    input_camera_spacing = 3                                
     for idx, pose in enumerate(pose_all):
         if idx % input_camera_spacing != 0:
             target_poses.append(pose)
@@ -448,7 +451,7 @@ def calculate_distance(input_pose, candidate_pose, alpha=1.0, beta=1.0, target_e
     
     position_distance = np.linalg.norm(input_translation - candidate_translation)
     
-    return alpha * position_distance + beta * np.abs(target_euler[1] - euler[1])
+    return alpha * position_distance + beta * np.abs(target_euler[1] - euler[1]) # XXX only take x-y plane's euler angle into consider.
 
 
 
@@ -495,15 +498,11 @@ def find_nearest_cond(target_pose, cond_poses, cond_idx, alpha=1.0, beta=1.0, ta
 
 
 
-# TODO find the nearest camera pose
-# TODO how to prove the correctness of camera pose? opencv or opengl?
-# 如果计算不对pose，就没法知道nearest选的对不对
-# 如果nearest选的不对，也没法判断pose算的对不对
 def launch():
     
     img_path = 'data/image_test'
     cam_file = 'data/cameras.npz'
-    output_path = 'data/image_output/35_gl11_50t_1r_new_camera'
+    output_path = 'data/image_output/38_space_3_gl10_30t_1r_newcam'
     intrinsic_all, pose_all, euler_returned_all = get_camera_poses(cam_file)
     intrinsic = intrinsic_all[0]
     cond_poses, cond_idx = get_cond_camera_poses(pose_all)
@@ -526,11 +525,12 @@ def launch():
         cond_image_pil.save(cond_save_path)
     print(f"Saved all condition images to: {cond_image_output_path}")
 
+
     for i, idx in enumerate(target_idx):
         if i % 3 == 0:
             target_pose = pose_all[idx]
             target_euler = euler_returned_all[idx]
-            nearest_cond_pose, nearest_cond_idx = find_nearest_cond(target_pose, cond_poses, cond_idx, alpha=50, beta=1, target_euler=target_euler, euler_all=cond_euler) # XXX
+            nearest_cond_pose, nearest_cond_idx = find_nearest_cond(target_pose, cond_poses, cond_idx, alpha=30, beta=1, target_euler=target_euler, euler_all=cond_euler) # XXX
             # nearest_cond_pose, nearest_cond_idx = find_nearest_cond(target_pose, cond_poses, cond_idx)
 
             # target_pose_gl = opencv_to_opengl(target_pose)

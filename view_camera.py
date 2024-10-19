@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.cm as cm
 
-# from test_camera import test_camera
+from test_camera import test_camera
 from launch_noSDS_camera import get_camera_poses
 
-def plot_camera_pose(T, ax=None, label='Camera', color='r', our_dataset=False, vert_ax='y', hori_ax='x'):
+def plot_camera_pose(T, ax=None, label='Camera', color='r', our_dataset=False, vert_ax='y', hori_ax='x', arrow_length=0.5):
     """
     view_camera
     T: 4x4 pose c2w
@@ -27,7 +27,7 @@ def plot_camera_pose(T, ax=None, label='Camera', color='r', our_dataset=False, v
 
 
     # normalize
-    arrow_length = 0.5
+    arrow_length = arrow_length
     norm = np.linalg.norm(direction)
     if norm == 0:
         print('camera vector length is 0')
@@ -91,14 +91,15 @@ def plot_camera_pose(T, ax=None, label='Camera', color='r', our_dataset=False, v
 if __name__ == '__main__':
 
     # SET THIS
-    save_path = "data/view_camera/18_new_cv_y-x.png"
-    vert_ax = 'y'
-    hori_ax = 'x'
-    view_space = 1
+    # using sds's pose can generate correct view, which suggests the figure's coordinate system is aligned with the sds's coordinate system.
+    save_path = "data/view_camera/26_new_gl3_z-y.png"
+    vert_ax = 'z'
+    hori_ax = 'y'
+    view_space = 1 # our_dataset:1  sds:10
     cam_file = 'data/cameras.npz'
-    _, poses, _ = get_camera_poses(cam_file) 
-    # poses = test_camera()
-    our_dataset = True
+    _, poses, _ = get_camera_poses(cam_file)  # our dataset poses
+    # poses = test_camera() # sds poses
+    our_dataset = True # a scale in translation
 
 
 
@@ -108,12 +109,12 @@ if __name__ == '__main__':
     colors = [cmap(i / num_cameras) for i in range(num_cameras)] 
         
     fig, ax = plt.subplots(figsize=(10, 8))
-
+    arrow_length = 0.5 
     for i, T in enumerate(poses):
         if i % view_space == 0:
             label = f'C{i}'
             color = colors[i % len(colors)]  
-            plot_camera_pose(T, ax=ax, label=label, color=color, our_dataset=our_dataset, vert_ax=vert_ax, hori_ax=hori_ax)
+            plot_camera_pose(T, ax=ax, label=label, color=color, our_dataset=our_dataset, vert_ax=vert_ax, hori_ax=hori_ax, arrow_length=arrow_length)
 
     # plt.show()
     plt.savefig(save_path)

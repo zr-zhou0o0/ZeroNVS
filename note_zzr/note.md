@@ -1,6 +1,5 @@
 
 # Workflow --all
-**collaborated with GPT-4O**
 
 - run
   - launch_inference.sh ->
@@ -173,3 +172,15 @@ the recorded camera pose's horizontal angle is righter than real camera pose's e
   - use the cond image to generate noSDS image.
   - use $P_n(default) = M_nd * P_d(cond)$ get $M_nd$, then $P_n(target) = M_nd * P_d(target)$ to get $P_n(target)$. where n is nerf coordinate, d is dataset coordinate. [-]
   - change the validate process in zero123, let it generates the target coordinate.
+
+
+
+
+# the coordinate system convert
+- translation scale! however we will never know the 'r' in sds when training has what measurment unit(maybe meter?)
+- and we also don't know what measurment unit is in our dataset.(hopefully still meter?)
+- to guess is the best way... 1:10???
+
+
+gl3 is the right one!!!
+so i have tried manymanymany converter, and the first one indeed is the right one......

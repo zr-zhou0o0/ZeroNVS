@@ -19,7 +19,7 @@ from test_camera import test_camera, get_defaults
 
 # The convention is opengl (x axis right, y axis up, z axis facing towards the viewer) in camera-to-world format.
 
-# 'gl11' CORRECT
+# 'gl11' 
 def opencv_to_opengl(pose):
     S = np.diag([1, 1, -1])
     R = pose[:3,:3]
