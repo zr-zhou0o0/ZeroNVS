@@ -103,7 +103,7 @@ loaded before diffusion...
   - why then ban SDS and then then straightly use diffusion?
 
 
-# ToDo
+# HaveDone
 - for a single image in our dataset, render use SDS and use without SDS, and concat the same view into one image for compare.
   - try to ban the remove validation image folder command to get the source image. [-]
   - try to find the built-in camera pose in nerf sampling [-]
@@ -118,6 +118,12 @@ loaded before diffusion...
 - note, we just need a single cond image can initialize zero123_guidance
 - so we should choose a novel view camera pose in the sds first, and use the find-nearest func find a cond image and generate a diffusion-only image, and pass the cond image to generate a sds image. 
 - another problem: different origin point choice. of sds and dif.
+
+
+# ToDo
+- take *rgb as conds, cameras.npz as cp, test-split-20 is camera pose need to be eval.
+- generate eval_camera_pose as png
+
 
 
 
@@ -184,3 +190,16 @@ the recorded camera pose's horizontal angle is righter than real camera pose's e
 
 gl3 is the right one!!!
 so i have tried manymanymany converter, and the first one indeed is the right one......
+
+
+
+
+
+
+
+# no hang up
+nohup python -u "/home/stu7/projects/ZeroNVS/launch_noSDS_random_all.py" > data/nohup_command_outputs/out_10_22_12_28.log 2>&1 &
+
+ps -aux | grep nohup
+
+kill -9 [pid]m
