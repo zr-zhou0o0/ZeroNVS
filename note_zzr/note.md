@@ -200,6 +200,8 @@ so i have tried manymanymany converter, and the first one indeed is the right on
 # no hang up
 nohup python -u "/home/stu7/projects/ZeroNVS/launch_noSDS_random_all.py" > data/nohup_command_outputs/out_10_22_12_28.log 2>&1 &
 
+nohup bash launch_inference.sh > data/nohup_command_outputs/out_11_8_23_09.log 2>&1 &
+
 ps -aux | grep nohup
 
 kill -9 [pid]m

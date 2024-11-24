@@ -18,6 +18,7 @@ from threestudio.models.guidance import zero123_guidance
 from omegaconf import OmegaConf 
 
 
+
 # 'gl3': R @ S, i.e.inverse camera's y and z axis
 def opencv_to_opengl(pose):
     pose_gl = pose.copy()
@@ -26,6 +27,28 @@ def opencv_to_opengl(pose):
     pose_gl[:, 2] *= -1  
     
     return pose_gl
+
+
+def get_pose_intrinsic():
+    root_path = 'data/experiment_data/baseline/replica-scan610' # XXX
+    pose_file = 'camera_poses_all.npy'
+    intrinsics_file = 'camera_intrinsics_fix.npy'
+
+    pose_path = os.path.join(root_path, pose_file)
+    intrinsics_path = os.path.join(root_path, intrinsics_file)
+
+    pose = np.load(pose_path)                   # [100, 4, 4]
+    intrinsics = np.load(intrinsics_path)       # [1, 4, 4], no need to process
+    # print(pose.shape)
+    # print(intrinsics.shape)
+
+    poses = []
+    for p in pose:
+        pose = opencv_to_opengl(p)
+        poses.append(pose)
+        print("poseshape 2", pose.shape) #XXX
+
+    return poses, intrinsics
 
 
 def load_K_Rt_from_P(filename, P=None):
@@ -72,7 +95,8 @@ def get_camera_poses(cam_file_path):
         P = world_mat @ scale_mat 
         P = P[:3, :4]
         intrinsics, pose, euler_angle_returned = load_K_Rt_from_P(None, P)
-
+        print("poseshape", pose.shape) #XXX
+        print("intrinsics", intrinsics) #XXX
         pose = opencv_to_opengl(pose)
 
         # because we do resize and center crop 384x384 when using omnidata model, we need to adjust the camera intrinsic accordingly
@@ -221,8 +245,8 @@ def find_nearest_cond(target_pose, cond_poses, cond_idx, alpha=1.0, beta=1.0, ta
 def launch():
 
     # SET HERE
-    dataset_path = 'data/experiment_data/scannetpp'
-    output_path = 'data/experiment_outputs/test3'
+    dataset_path = 'data/experiment_data/baseline_cond' 
+    output_path = 'data/experiment_outputs/test4'
     cam_file_name = 'cameras.npz'
     test_folder_name = 'test-split-100'
     cam_file_name_test = 'cameras.npz'
@@ -243,11 +267,14 @@ def launch():
         cond_img_name_all = [file for file in files if file.endswith('_rgb.png')] # a list, '000001_rgb.png'
         cam_file_cond = os.path.join(subpath, cam_file_name) # e.g.'data/experiment_data/replica/scan25/cameras.npz'
 
-        test_folder_path = os.path.join(subpath, test_folder_name) # e.g.'data/experiment_data/replica/scan25/test-split-20'
-        cam_file_target = os.path.join(test_folder_path, cam_file_name_test) # e.g.'data/experiment_data/replica/scan25/test-split-20/cameras.npz'
+        # test_folder_path = os.path.join(subpath, test_folder_name) # e.g.'data/experiment_data/replica/scan25/test-split-20'
+        # cam_file_target = os.path.join(test_folder_path, cam_file_name_test) # e.g.'data/experiment_data/replica/scan25/test-split-20/cameras.npz'
+        test_folder_path = 'data/experiment_data/baseline/replica-scan610' # XXX
+        cam_file_target = ''
 
         intrinsic_cond_all, pose_cond_all, _ = get_camera_poses(cam_file_cond)
-        _, pose_target_all, _ = get_camera_poses(cam_file_target)
+        # _, pose_target_all, _ = get_camera_poses(cam_file_target)
+        pose_target_all, _ = get_pose_intrinsic() # XXX
         cond_poses = pose_cond_all
         target_poses = pose_target_all
         cond_idx = np.arange(0, len(cond_poses), 1)

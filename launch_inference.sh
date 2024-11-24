@@ -8,7 +8,7 @@ CONFIG_PATH='zeronvs_config.yaml'
 # ELEVATION_DEG=31.0
 
 # ‘cond=’
-IMAGE_PATH='data/image_test/000063_rgb.png'
+IMAGE_PATH='data/image_test/000016_rgb.png'
 FOV=35
 ELEVATION_DEG=21.0
 

@@ -204,7 +204,7 @@ system:
   loss:
     lambda_sds: 0.1
     lambda_clip: 0.
-    lambda_rgb: 1500.
+    lambda_rgb: 0.0001 # 0.1 # 1500.
     lambda_mask: 0.
     lambda_depth: 0. # 0.05
     lambda_depth_rel: 0. # [0, 0, 0.05, 100]
